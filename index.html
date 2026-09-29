@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Honeycomb: Constant-Size Scene Memory Representation for Video World Models</title>
+  <meta name="description" content="Honeycomb: a video world model with HexMemory, a fixed-size six-plane scene memory.">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans:400,700|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/index.css">
+  <script type="importmap">
+  { "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  } }
+  </script>
+</head>
+<body>
+
+<!-- ============================ HEADER ============================ -->
+<section class="hero">
+  <div class="container narrow center">
+    <h1 class="title"><span class="brand"><span class="brand-word">Honeycomb</span><svg class="bee" viewBox="0 0 26 18" aria-hidden="true">
+          <g class="bee-wings">
+            <ellipse cx="12" cy="4.6" rx="4.4" ry="2.6" fill="#cfe3f5" opacity=".85" transform="rotate(-18 12 4.6)"/>
+            <ellipse cx="16" cy="4.8" rx="3.8" ry="2.3" fill="#cfe3f5" opacity=".7" transform="rotate(14 16 4.8)"/>
+          </g>
+          <g class="bee-body">
+            <ellipse cx="14" cy="9.6" rx="7.2" ry="4.6" fill="#E8A33D"/>
+            <path d="M11.2 5.6a7.2 4.6 0 0 0 0 8 Z" fill="#3a3129"/>
+            <path d="M14.6 5.2a7.2 4.6 0 0 1 .2 8.8 l-1.9-.2 a7.2 4.6 0 0 0 0-8.4 Z" fill="#3a3129"/>
+            <circle cx="20.1" cy="8.6" r="3.2" fill="#3a3129"/>
+            <path d="M21.6 5.6 L23.6 2.6 M22.6 6.4 L25.2 4.6" stroke="#3a3129" stroke-width="1" stroke-linecap="round" fill="none"/>
+          </g>
+        </svg></span><span style="color:#A66B00">:</span> Constant-Size Scene Memory<br>Representation for Video World Models</h1>
+    <div class="authors">
+      <div class="author-row">
+        <span class="author-name">Jack Wei Lun Shi<sup>2,*</sup>,</span>
+        <span class="author-name">Kaichen Zhou<sup>1,3,*</sup>,</span>
+      </div>
+      <div class="author-row">
+        <span class="author-name">Haoyu Chen<sup>1</sup>,</span>
+        <span class="author-name">Yufeng Weng<sup>2</sup>,</span>
+        <span class="author-name">Keane Ong<sup>2,3</sup>,</span>
+        <span class="author-name">Ruojin Cai<sup>1</sup>,</span>
+        <span class="author-name">Hang Hua<sup>4</sup>,</span>
+      </div>
+      <div class="author-row">
+        <span class="author-name">Justin K.W. Yeoh<sup>2</sup>,</span>
+        <span class="author-name">Mengyu Wang<sup>1</sup></span>
+      </div>
+    </div>
+    <div class="affiliations">
+      <div class="affiliation-row">
+        <span><sup>1</sup> Harvard University</span>
+        <span><sup>2</sup> National University of Singapore</span>
+      </div>
+      <div class="affiliation-row">
+        <span><sup>3</sup> MIT</span>
+        <span><sup>4</sup> MIT-IBM Watson AI Lab</span>
+      </div>
+    </div>
+    <p class="author-note">* Equal contribution.</p>
+    <div class="links">
+      <a class="btn" href="https://github.com/Honeycomb-Submission/Honeycomb">Code</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ TEASER: HEXMEMORY VISUALIZATION ============================ -->
+<section class="section teaser">
+  <div class="container">
+    <h2 class="center">Writing a video into HexMemory</h2>
+    <div class="scenes">
+      <button class="on" data-scene="alley">Alley</button>
+      <button data-scene="park">Garden</button>
+      <button data-scene="temple">Street</button>
+      <button data-scene="kitchen">Home</button>
+      <button data-scene="sunroom">Sunroom</button>
+    </div>
+    <div class="top">
+      <video id="vid" autoplay muted playsinline preload="auto"></video>
+      <div id="cloud"><div class="hint">Drag to rotate, scroll to zoom</div></div>
+    </div>
+
+    <div class="mem">
+      <h2 class="memtitle">HexMemory Visualization</h2>
+      <h3>Spatial Planes</h3>
+      <div class="spatial">
+        <figure><canvas id="c-front"></canvas><figcaption>front view XY</figcaption></figure>
+        <figure><canvas id="c-top"></canvas><figcaption>top-down XZ</figcaption></figure>
+        <figure><canvas id="c-side"></canvas><figcaption>side view YZ</figcaption></figure>
+      </div>
+      <h3 style="margin-top:14px">Spatiotemporal Planes</h3>
+      <div class="st">
+        <figure><canvas id="c-zt"></canvas><figcaption>ZT · walk → · τ ↑</figcaption></figure>
+        <figure><canvas id="c-yt"></canvas><figcaption>YT · height → · τ ↑</figcaption></figure>
+        <figure><canvas id="c-xt"></canvas><figcaption>XT · lateral → · τ ↑</figcaption></figure>
+      </div>
+      <div class="legend">
+        <span><span class="sw" style="background:linear-gradient(90deg,#000004,#b73779,#fcfdbf)"></span>|feature| (channel L2)</span>
+        <span><span class="sw" style="border:1px solid #ccc;background:#fff"></span>never written</span>
+        <span><span class="sw" style="border-top:2px dashed #1f4fd6;height:0"></span>extent before the last write</span>
+        <span><span class="sw" style="background:radial-gradient(circle,var(--pending) 35%,transparent 40%);background-size:6px 6px"></span>points of the current chunk, written when the chunk ends</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ ABSTRACT ============================ -->
+<section class="section">
+  <div class="container narrow">
+    <h2>Abstract</h2>
+    <p class="justify">
+      Video world models require persistent scene memory to maintain consistency during long-horizon video
+      generation. Existing spatial memories accumulate RGB observations or latent features, increasing storage
+      requirements as generation proceeds. We introduce Honeycomb, a video world model built on HexMemory, our
+      proposed low-rank representation for storing scene features in a fixed-size memory with a total of six
+      spatial and spatiotemporal planes. A feed-forward writer maps each generated chunk into new plane features.
+      As the spatial coverage or temporal range expands, we warp the previous planes while preserving their
+      dimensions, then fuse them with the new features through confidence-weighted pooling and a learned residual
+      correction. A reader retrieves latents from HexMemory to condition subsequent video generation. The writer
+      processes only observations from the new chunk, avoiding per-scene optimization and repeated processing of
+      the full history. Experiments on WorldScore and RealEstate10K demonstrate strong video generation quality
+      and robust revisit consistency while keeping HexMemory feature storage constant throughout generation.
+    </p>
+  </div>
+</section>
+
+<!-- ============================ METHOD ============================ -->
+<section class="section">
+  <div class="container">
+    <h2 class="center">Method</h2>
+    <figure class="fig">
+      <img src="resources/method/pipeline.svg" alt="Overview of the Honeycomb pipeline">
+      <figcaption class="caption center">Overview of the Honeycomb pipeline. For scene-consistent video generation, we a) initialize a fixed-size
+        HexMemory, b) read it to condition a generated chunk, and then c) write new observations back into the same tensors.</figcaption>
+    </figure>
+
+    <figure class="fig fig-gap">
+      <img src="resources/method/memory_comparison.png" alt="Memory design comparison: Spatia, LSM-World and Honeycomb">
+      <figcaption class="caption center">Memory design comparison. Spatia backprojects RGB observations into a point cloud,
+        while LSM-World accumulates latent points. Honeycomb instead writes to HexMemory with fixed-size feature storage.</figcaption>
+    </figure>
+
+    <figure class="fig fig-medium">
+      <img src="resources/method/splatting.svg" alt="Point projection to a plane and bilinear splatting to four neighbouring cells">
+      <figcaption class="caption center">Bilinear splatting within the feed-forward writer. Left: point p<sub>i</sub> maps to location
+        q<sub>i</sub> on plane P. Right: its learned contribution is distributed to the four neighbouring cells using bilinear weights
+        w<sub>i,m</sub>. This operation is repeated for all six planes.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================ REVISIT ============================ -->
+<section class="section tight-top">
+  <div class="container">
+    <h2 class="center">Closed-Loop Revisit</h2>
+
+    <figure class="fig">
+      <img src="resources/revisit/teaser.jpg" alt="Revisiting a scene with constant-size memory: Honeycomb, Spatia and LSM-World">
+      <figcaption class="caption center">Revisiting a scene with constant-size feature memory. Given a single input frame and a camera trajectory
+        that moves away and returns to the initial pose, Honeycomb generates a video whose final frame is consistent with the input frame.
+        Videos below: Spatia is shown in its native 24 FPS format, while LSM-World and Honeycomb are shown at native 16 FPS.</figcaption>
+    </figure>
+
+    <div class="revisit">
+      <div class="revisit-head"><span><b>Honeycomb</b></span><span>Spatia</span><span>LSM-World</span></div>
+      <div class="revisit-row">
+        <video src="resources/revisit/living_honeycomb.mp4" autoplay muted loop playsinline></video>
+        <video src="resources/revisit/living_spatia.mp4" autoplay muted loop playsinline></video>
+        <video src="resources/revisit/living_lsm.mp4" autoplay muted loop playsinline></video>
+      </div>
+      <div class="revisit-row">
+        <video src="resources/revisit/dining_honeycomb.mp4" autoplay muted loop playsinline></video>
+        <video src="resources/revisit/dining_spatia.mp4" autoplay muted loop playsinline></video>
+        <video src="resources/revisit/dining_lsm.mp4" autoplay muted loop playsinline></video>
+      </div>
+      <div class="revisit-row">
+        <video src="resources/revisit/landscape_honeycomb.mp4" autoplay muted loop playsinline></video>
+        <video src="resources/revisit/landscape_spatia.mp4" autoplay muted loop playsinline></video>
+        <video src="resources/revisit/landscape_lsm.mp4" autoplay muted loop playsinline></video>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ NVS ============================ -->
+<section class="section">
+  <div class="container">
+    <h2 class="center">Novel View Synthesis</h2>
+
+    <div class="nvs">
+      <video id="nvs-player" src="resources/nvs/01_00004893.mp4" autoplay muted loop playsinline></video>
+      <div class="thumbs" id="nvs-thumbs">
+      <button class="thumb on" data-src="resources/nvs/01_00004893.mp4"><img src="resources/nvs/01_00004893.jpg" alt="Example 1"></button>
+      <button class="thumb" data-src="resources/nvs/02_00016520.mp4"><img src="resources/nvs/02_00016520.jpg" alt="Example 2"></button>
+      <button class="thumb" data-src="resources/nvs/03_00011309.mp4"><img src="resources/nvs/03_00011309.jpg" alt="Example 3"></button>
+      <button class="thumb" data-src="resources/nvs/04_00009555.mp4"><img src="resources/nvs/04_00009555.jpg" alt="Example 4"></button>
+      <button class="thumb" data-src="resources/nvs/05_00013874.mp4"><img src="resources/nvs/05_00013874.jpg" alt="Example 5"></button>
+      <button class="thumb" data-src="resources/nvs/06_00016167.mp4"><img src="resources/nvs/06_00016167.jpg" alt="Example 6"></button>
+      <button class="thumb" data-src="resources/nvs/07_00002640.mp4"><img src="resources/nvs/07_00002640.jpg" alt="Example 7"></button>
+      <button class="thumb" data-src="resources/nvs/08_00009435.mp4"><img src="resources/nvs/08_00009435.jpg" alt="Example 8"></button>
+      <button class="thumb" data-src="resources/nvs/09_00001135.mp4"><img src="resources/nvs/09_00001135.jpg" alt="Example 9"></button>
+      <button class="thumb" data-src="resources/nvs/10_00009570.mp4"><img src="resources/nvs/10_00009570.jpg" alt="Example 10"></button>
+      </div>
+    </div>
+    <p class="caption center">Honeycomb generates 3 autoregressive chunks from a single input image along the RealEstate10K camera trajectory. Select an example to play it.</p>
+  </div>
+</section>
+
+<!-- ============================ RESULTS ============================ -->
+<section class="section tight-top">
+  <div class="container">
+    <h2 class="center">Quantitative Results</h2>
+    <div class="table-wrap">
+      <table class="results">
+        <caption><b>Evaluation results on WorldScore.</b> The Average Score is the mean of the Static and Dynamic Scores;
+          all remaining metrics are computed by the WorldScore benchmark.</caption>
+        <thead>
+          <tr><th class="m">Method</th><th>Average<br>Score</th><th>Static<br>Score</th><th class="sep">Dynamic<br>Score</th>
+              <th>3D<br>Const</th><th>Photo<br>Const</th><th>Style<br>Const</th><th>Subject<br>Quality</th></tr>
+        </thead>
+        <tbody>
+          <tr class="group"><td colspan="8"><i>Models with 3D cache</i></td></tr>
+          <tr><td class="m">WonderJourney</td><td>54.19</td><td>63.75</td><td class="sep">44.63</td><td>80.60</td><td>79.03</td><td>62.82</td><td><b>66.56</b></td></tr>
+          <tr><td class="m">WonderWorld</td><td>61.79</td><td><b>72.69</b></td><td class="sep">50.88</td><td><b>86.87</b></td><td>85.56</td><td>70.57</td><td>49.81</td></tr>
+          <tr><td class="m">Spatia</td><td><u>63.21</u></td><td>64.88</td><td class="sep"><u>61.54</u></td><td><u>83.26</u></td><td><b>89.09</b></td><td><u>83.33</u></td><td>46.66</td></tr>
+          <tr><td class="m">LSM-World</td><td>61.20</td><td>62.69</td><td class="sep">59.70</td><td>80.88</td><td>76.10</td><td>–</td><td>–</td></tr>
+          <tr class="group"><td colspan="8"><i>General video models</i></td></tr>
+          <tr><td class="m">VideoCrafter2</td><td>50.03</td><td>52.57</td><td class="sep">47.49</td><td>65.14</td><td>61.85</td><td>43.79</td><td>56.74</td></tr>
+          <tr><td class="m">EasyAnimate</td><td>52.25</td><td>52.85</td><td class="sep">51.65</td><td>67.29</td><td>47.35</td><td>73.05</td><td>50.31</td></tr>
+          <tr><td class="m">Allegro</td><td>53.64</td><td>55.31</td><td class="sep">51.97</td><td>70.50</td><td>69.89</td><td>65.60</td><td>47.41</td></tr>
+          <tr><td class="m">Wan2.1</td><td>55.21</td><td>57.56</td><td class="sep">52.85</td><td>78.74</td><td>78.36</td><td>77.18</td><td><u>59.38</u></td></tr>
+          <tr class="ours"><td class="m">Honeycomb</td><td><b>65.52</b></td><td><u>68.01</u></td><td class="sep"><b>63.03</b></td><td>82.29</td><td><u>85.76</u></td><td><b>84.21</b></td><td>46.28</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table class="results">
+        <caption><b>Novel-view synthesis on RealEstate10K and closed-loop on WorldScore.</b>
+          We report evaluation results of all baseline methods using their default settings.</caption>
+        <thead>
+          <tr><th></th><th colspan="3" class="span">RE10K NVS</th><th colspan="4" class="span">WorldScore closed-loop</th></tr>
+          <tr><th class="m">Method</th><th>PSNR↑</th><th>SSIM↑</th><th class="sep">LPIPS↓</th>
+              <th>PSNR<sub>C</sub>↑</th><th>SSIM<sub>C</sub>↑</th><th>LPIPS<sub>C</sub>↓</th><th>Flow<sub>C</sub>↓</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="m">ViewCrafter</td><td>12.28</td><td>0.512</td><td class="sep">0.571</td><td>12.32</td><td>0.369</td><td>0.574</td><td>30.78</td></tr>
+          <tr><td class="m">FlexWorld</td><td>13.17</td><td>0.567</td><td class="sep">0.544</td><td>12.86</td><td>0.430</td><td>0.602</td><td>55.77</td></tr>
+          <tr><td class="m">Voyager</td><td>14.67</td><td>0.577</td><td class="sep">0.493</td><td><u>15.99</u></td><td>0.459</td><td>0.423</td><td>7.11</td></tr>
+          <tr><td class="m">Spatia</td><td>15.58</td><td>0.616</td><td class="sep"><u>0.390</u></td><td>15.67</td><td><u>0.488</u></td><td><u>0.353</u></td><td><u>6.64</u></td></tr>
+          <tr><td class="m">LSM-World</td><td><u>17.46</u></td><td><u>0.636</u></td><td class="sep">0.452</td><td>15.12</td><td>0.460</td><td>0.463</td><td>27.05</td></tr>
+          <tr class="ours"><td class="m">Honeycomb</td><td><b>18.45</b></td><td><b>0.674</b></td><td class="sep"><b>0.274</b></td><td><b>17.22</b></td><td><b>0.504</b></td><td><b>0.311</b></td><td><b>3.00</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ CONCLUSION ============================ -->
+<section class="section tight-top">
+  <div class="container narrow">
+    <h2>Conclusion</h2>
+    <p class="justify">
+      Maintaining scene consistency over long video rollouts requires persistent memory that can efficiently incorporate
+      new observations. In this work, we introduce Honeycomb, a video world model with HexMemory. This design keeps feature
+      storage fixed without reprocessing the entire history at each write. Experiments on WorldScore and RealEstate10K
+      demonstrate better generation quality, novel-view synthesis, and revisit consistency. These results highlight the
+      potential of recurrent feature memory for efficient and consistent video world modeling.
+    </p>
+  </div>
+</section>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const PLANES = ['front', 'top', 'side', 'zt', 'yt', 'xt'];
+const SP_H = 900, ST_W = 1024, ST_H = 150;   // shared canvas pixel sizes, so dashes and dots look identical across planes
+const toThree = (x, y, z) => new THREE.Vector3(x, -y, -z);   // world (OpenCV: x right, y down, z fwd) -> three.js
+
+// ---------------- 3D view (shared across scenes) ----------------
+const host = document.getElementById('cloud');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xffffff);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 500);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+function resize() {
+  const w = host.clientWidth, h = host.clientHeight;
+  renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(host);
+
+const geo = new THREE.BufferGeometry();
+scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.1, vertexColors: true, sizeAttenuation: true })));
+const path = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x000000 }));
+const frustum = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x000000 }));
+scene.add(path, frustum);
+
+// ---------------- current scene data ----------------
+let S = null;   // { meta, XYZ, B, cum, centers, imgs }
+const cache = {};
+
+// point positions are stored as little-endian float16; decode with a lookup table (Float16Array is not yet universal)
+const HALF = new Float32Array(65536);
+for (let h = 0; h < 65536; h++) {
+  const sign = h & 0x8000 ? -1 : 1, e = (h >> 10) & 0x1f, f = h & 0x3ff;
+  HALF[h] = e === 0 ? sign * 2 ** -14 * (f / 1024) : e === 31 ? (f ? NaN : sign * Infinity) : sign * 2 ** (e - 15) * (1 + f / 1024);
+}
+function halfToFloat(buf) {
+  const u = new Uint16Array(buf), out = new Float32Array(u.length);
+  for (let i = 0; i < u.length; i++) out[i] = HALF[u[i]];
+  return out;
+}
+
+async function fetchScene(name) {
+  if (cache[name]) return cache[name];
+  const dir = `resources/teaser/${name}`;
+  const [meta, xyzBuf, rgbBuf] = await Promise.all([
+    fetch(`${dir}/meta.json`).then(r => r.json()),
+    fetch(`${dir}/points_xyz.f16`).then(r => r.arrayBuffer()),
+    fetch(`${dir}/points_rgb.u8`).then(r => r.arrayBuffer()),
+  ]);
+  const XYZ = halfToFloat(xyzBuf), RGB = new Uint8Array(rgbBuf), n = XYZ.length / 3;
+  const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    pos[3*i] = XYZ[3*i]; pos[3*i+1] = -XYZ[3*i+1]; pos[3*i+2] = -XYZ[3*i+2];
+    col[3*i] = RGB[3*i] / 255; col[3*i+1] = RGB[3*i+1] / 255; col[3*i+2] = RGB[3*i+2] / 255;
+  }
+  const imgs = {};
+  await Promise.all(PLANES.flatMap(p => meta.bounds.map((_, k) => new Promise(res => {   // one image per memory state
+    const im = new Image(); im.onload = res; im.onerror = res;   // a failed image must not stall the scene
+    im.src = `${dir}/planes/${p}_${k}.png`; imgs[`${p}_${k}`] = im;
+  }))));
+  const cum = [0]; meta.counts.forEach(c => cum.push(cum[cum.length - 1] + c));   // cum[t+1] = points up to latent t
+  const centers = meta.cam_c2w.map(m => toThree(m[0][3], m[1][3], m[2][3]));
+  return (cache[name] = { name, dir, meta, XYZ, pos, col, B: meta.bounds, cum, centers, imgs, box: pointBox(XYZ) });
+}
+
+// scene extent: middle 90% of the points along each axis (robust to far stray points)
+function pointBox(X) {
+  const lo = [], hi = [];
+  for (let a = 0; a < 3; a++) {
+    const v = []; for (let i = a; i < X.length; i += 150) v.push(X[i]);
+    v.sort((p, q) => p - q); lo.push(v[Math.floor(v.length * .05)]); hi.push(v[Math.floor(v.length * .95)]);
+  }
+  return { lo, hi, ext: Math.max(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) };
+}
+
+// initial 3D view per scene (picked by hand in the browser)
+const VIEWS = {
+  alley:   { pos: [14.77, 26.53, -15.76], target: [0.74, 4.73, -21.97] },
+  park:    { pos: [7.74, 3.71, 2.51],     target: [0.93, 0.72, -12.16] },
+  temple:  { pos: [19.01, 12.93, -6.15],  target: [-1.3, 4.88, -18.33] },
+  kitchen: { pos: [4.08, 3.09, 1.22],     target: [0.83, 0.51, -4.77] },
+  sunroom: { pos: [-1.45, 1.39, 1.56],    target: [-0.03, 0.24, -5.29] },
+};
+function setView(sc) {
+  const v = VIEWS[sc.name];
+  camera.position.set(...v.pos); controls.target.set(...v.target); controls.update();
+}
+
+function setFrustum(t) {
+  // frustum depth scales with the scene: 1.6 m for the alley (extent 32.8 m), proportionally smaller or larger elsewhere
+  const m = S.meta.cam_c2w[t], K = S.meta.K, d = 1.6 * S.box.ext / 32.8;
+  const corners = [[0,0],[1280,0],[1280,704],[0,704]].map(([u, v]) => {
+    const c = [(u - K[0][2]) / K[0][0] * d, (v - K[1][2]) / K[1][1] * d, d];
+    return toThree(m[0][0]*c[0] + m[0][1]*c[1] + m[0][2]*c[2] + m[0][3],
+                   m[1][0]*c[0] + m[1][1]*c[1] + m[1][2]*c[2] + m[1][3],
+                   m[2][0]*c[0] + m[2][1]*c[1] + m[2][2]*c[2] + m[2][3]);
+  });
+  const o = S.centers[t], p = [];
+  corners.forEach((c, i) => { p.push(o, c, c, corners[(i + 1) % 4]); });
+  frustum.geometry.setFromPoints(p);
+}
+
+// ---------------- planes ----------------
+const cv = {};
+PLANES.forEach(p => { cv[p] = document.getElementById('c-' + p); });
+const spRow = document.querySelector('.spatial');
+function layoutSpatial() {   // one shared height so the three spatial planes span the full box
+  if (!S) return;
+  const GAP = 14, names = ['front', 'top', 'side'];
+  const aspects = names.map(p => S.meta.planes[p][0] / S.meta.planes[p][1]);
+  const h = (spRow.clientWidth - GAP * 2) / aspects.reduce((a, b) => a + b, 0);
+  names.forEach((p, i) => { cv[p].style.width = `${aspects[i] * h}px`; cv[p].style.height = `${h}px`; });
+}
+new ResizeObserver(layoutSpatial).observe(spRow);
+
+// world -> (col, row) in PNG cells, for the displayed state's bounds (matches the notebook's orientation)
+function cell(p, b, x, y, z) {
+  const [W, H] = S.meta.planes[p];
+  const f = (v, a, N) => (v - b.lo[a]) / (b.hi[a] - b.lo[a]) * (N - 1);
+  if (p === 'front') return [f(x, 0, W), f(y, 1, H)];
+  if (p === 'top')   return [f(x, 0, W), (H - 1) - f(z, 2, H)];
+  return [f(z, 2, W), f(y, 1, H)];                                   // side
+}
+
+function drawSpatial(p, k, t) {
+  const c = cv[p], g = c.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.clearRect(0, 0, c.width, c.height);
+  g.drawImage(S.imgs[`${p}_${k}`], 0, 0, c.width, c.height);
+  const b = S.B[k];
+  const sx = c.width / S.meta.planes[p][0], sy = c.height / S.meta.planes[p][1];
+  if (k > 0) {   // previous extent, dashed
+    const pb = S.B[k - 1];
+    const [c0, r0] = cell(p, b, pb.lo[0], pb.lo[1], pb.lo[2]);
+    const [c1, r1] = cell(p, b, pb.hi[0], pb.hi[1], pb.hi[2]);
+    g.strokeStyle = '#1f4fd6'; g.lineWidth = 2; g.setLineDash([10, 6]);
+    g.strokeRect((Math.min(c0, c1) + .5) * sx, (Math.min(r0, r1) + .5) * sy,
+                 Math.abs(c1 - c0) * sx, Math.abs(r1 - r0) * sy);
+    g.setLineDash([]);
+  }
+  // points of the chunk in progress (latents 8k+1 .. t), not yet in memory;
+  // skipped for trailing latents that never form a full chunk (they are never written)
+  if (t % 8 !== 0 && k + 1 < S.B.length) {
+    g.fillStyle = 'rgba(26,158,119,0.35)';
+    const from = S.cum[8 * k + 1], to = S.cum[t + 1], X = S.XYZ;
+    for (let i = from; i < to; i += 5) {
+      const [cc, rr] = cell(p, b, X[3*i], X[3*i+1], X[3*i+2]);
+      g.fillRect(cc * sx, rr * sy, 2, 2);
+    }
+  }
+}
+
+function drawST(p, k) {
+  const c = cv[p], g = c.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.clearRect(0, 0, c.width, c.height);
+  g.drawImage(S.imgs[`${p}_${k}`], 0, 0, c.width, c.height);
+  if (k > 0 && S.B[k - 1].hi[3] < S.B[k].hi[3]) {   // previous t extent
+    const y = (1 - (S.B[k - 1].hi[3] / S.B[k].hi[3] * 24 + .5) / 25) * c.height;
+    g.strokeStyle = '#1f4fd6'; g.lineWidth = 4; g.setLineDash([12, 8]);
+    g.beginPath(); g.moveTo(0, y); g.lineTo(c.width, y); g.stroke(); g.setLineDash([]);
+  }
+}
+
+// ---------------- scene switching + sync ----------------
+const vid = document.getElementById('vid');
+let shownT = -1;
+
+async function loadScene(name) {
+  const sc = await fetchScene(name);
+  S = sc;
+  geo.setAttribute('position', new THREE.BufferAttribute(sc.pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(sc.col, 3));
+  path.geometry.setFromPoints(sc.centers);
+  PLANES.forEach(p => {
+    const [w, h] = sc.meta.planes[p];
+    if (p === 'front' || p === 'top' || p === 'side') { cv[p].height = SP_H; cv[p].width = Math.round(w / h * SP_H); }
+    else { cv[p].width = ST_W; cv[p].height = ST_H; }
+  });
+  layoutSpatial();
+  setView(sc);
+  shownT = -1;
+  vid.poster = `${sc.dir}/poster.jpg`;   // shown until playback starts (iOS blocks autoplay before any tap)
+  vid.src = `${sc.dir}/clip.mp4`;
+  if (pinnedT === null) vid.play().catch(() => {});
+  update(pinnedT ?? 0);
+}
+
+function update(t) {
+  const k = Math.min(Math.floor(t / 8), S.B.length - 1);   // memory state after the last completed write
+  geo.setDrawRange(0, S.cum[t + 1]);
+  path.geometry.setDrawRange(0, t + 1);
+  setFrustum(t);
+  ['front', 'top', 'side'].forEach(p => drawSpatial(p, k, t));
+  if (shownT < 0 || Math.floor(shownT / 8) !== k) ['zt', 'yt', 'xt'].forEach(p => drawST(p, k));
+  shownT = t;
+}
+function loop() {
+  if (S) {
+    const T = S.meta.counts.length - 1;              // last latent step (32 for 129 frames, 24 for 97)
+    const fr = pinnedT !== null ? Math.min(pinnedT, T) * 4 : Math.min(4 * T, vid.currentTime * 16);
+    const t = Math.floor((Math.floor(fr + 1e-3)) / 4);
+    if (t !== shownT) update(t);
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+
+const h = location.hash.match(/t=(\d+)/);   // #t=20 pins the view at latent step 20 (for checking)
+const pinnedT = h ? Math.min(32, +h[1]) : null;
+if (h) vid.removeAttribute('autoplay');
+// iOS blocks autoplay until the page is touched: start on the first interaction
+['touchstart', 'pointerdown', 'keydown'].forEach(ev => window.addEventListener(ev, function once() {
+  if (vid.paused && pinnedT === null) vid.play().catch(() => {});
+  ['touchstart', 'pointerdown', 'keydown'].forEach(e2 => window.removeEventListener(e2, once));
+}, { once: false, passive: true }));
+
+// hold the last frame for 2 s, then replay
+vid.addEventListener('ended', () => setTimeout(() => { vid.currentTime = 0; vid.play(); }, 2000));
+
+document.querySelectorAll('.scenes button[data-scene]').forEach(btn => btn.addEventListener('click', () => {
+  if (btn.classList.contains('on')) return;
+  document.querySelectorAll('.scenes button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  loadScene(btn.dataset.scene);
+}));
+
+// NVS: one player, thumbnails pick the example
+const nvsPlayer = document.getElementById('nvs-player');
+document.querySelectorAll('#nvs-thumbs .thumb').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('#nvs-thumbs .thumb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  nvsPlayer.src = btn.dataset.src;
+  nvsPlayer.play().catch(() => {});
+}));
+
+resize();
+const startScene = (location.hash.match(/scene=([\w-]+)/) || [])[1] || 'alley';
+document.querySelectorAll('.scenes button').forEach(b => b.classList.toggle('on', b.dataset.scene === startScene));
+await loadScene(startScene);
+loop();
+</script>
+</body>
+</html>

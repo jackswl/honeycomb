@@ -1,0 +1,210 @@
+:root {
+  --text: #363636;
+  --muted: #6b6b6b;
+  --line: #dbdbdb;
+  --ph: #eef1f5;
+  --ph-border: #9aa7b8;
+  --accent: #c8860d; /* honeycomb amber */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Noto Sans', sans-serif;
+  color: var(--text);
+  background: #fff;
+  line-height: 1.6;
+}
+
+a { color: #3273dc; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+.container.narrow { max-width: 860px; }
+.center { text-align: center; }
+.justify { text-align: justify; }
+
+.section { padding: 2.5rem 0; }
+.section.tight-top { padding-top: 1rem; }
+
+h2 {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+
+.hero { padding: 3rem 0 1rem; }
+.title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 2.4rem;
+  line-height: 1.25;
+  margin: 0 0 1rem;
+}
+.authors { font-size: clamp(.95rem, 2vw, 1.2rem); margin: 0; }
+.author-row { display: flex; justify-content: center; flex-wrap: wrap; gap: .25rem 1.1rem; }
+.author-name { white-space: nowrap; }
+.author-name sup { font-size: .7em; }
+.affiliations { font-size: .95rem; margin-top: .65rem; }
+.affiliation-row { display: flex; justify-content: center; flex-wrap: wrap; gap: .2rem 1rem; }
+.affiliation-row span { white-space: nowrap; }
+.author-note { color: var(--muted); font-size: .9rem; margin: .4rem 0 1.25rem; }
+.venue { color: var(--muted); margin: 0 0 1.25rem; }
+
+.links { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; }
+.btn {
+  background: #363636; color: #fff; text-decoration: none;
+  padding: .45rem 1.1rem; border-radius: 999px; font-size: .95rem;
+}
+.btn:hover { background: #111; }
+
+.lead { color: var(--muted); margin-top: -.5rem; }
+.caption { color: var(--muted); font-size: .92rem; margin: .5rem 0 1.25rem; }
+.col-label { text-align: center; margin: .35rem 0 0; font-size: .95rem; }
+
+/* Placeholders */
+.ph {
+  position: relative;
+  width: 100%;
+  background: var(--ph);
+  border: 2px dashed var(--ph-border);
+  border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .35rem; padding: 1rem; text-align: center;
+}
+.ph.ours { border-color: var(--accent); }
+.ph-tag {
+  font-family: 'Google Sans', sans-serif; font-weight: 700;
+  font-size: .85rem; letter-spacing: .04em; color: #4a5566;
+}
+.ph-desc { font-size: .85rem; color: var(--muted); max-width: 60ch; }
+.ph-file { font-family: monospace; font-size: .75rem; color: #7a8699; word-break: break-all; }
+
+/* Grids */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; }
+.grid-nvs { display: grid; grid-template-columns: 1fr 2fr 2fr; gap: .75rem; align-items: center; }
+
+/* Tabs */
+.tabs { display: flex; justify-content: center; gap: .5rem; margin: 1.5rem 0 1rem; flex-wrap: wrap; }
+.tab {
+  font: inherit; cursor: pointer; background: #fff; color: var(--text);
+  border: 1px solid var(--line); border-radius: 999px; padding: .35rem 1rem;
+}
+.tab.active { background: #363636; color: #fff; border-color: #363636; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.slider-row, .selector {
+  display: flex; align-items: center; justify-content: center; gap: .6rem;
+  margin: 1rem 0; flex-wrap: wrap;
+}
+.slider-row input { width: min(320px, 60vw); accent-color: var(--accent); }
+.selector select { font: inherit; padding: .2rem .4rem; }
+
+pre {
+  background: #fff; border: 1px solid var(--line); padding: 1rem; border-radius: 6px;
+  overflow-x: auto; font-size: .85rem;
+}
+
+.footer { padding: 2rem 0; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--line); }
+
+@media (max-width: 768px) {
+  .title { font-size: 1.7rem; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+  .grid-nvs { grid-template-columns: 1fr; }
+}
+
+/* Figures */
+.fig { margin: 1.5rem auto 0; }
+.fig img { display: block; width: 100%; height: auto; }
+.fig-narrow { max-width: 460px; }
+.fig-medium { max-width: 760px; }
+.fig-gap { margin-top: 3.5rem; }
+
+/* Revisit: one row per scene, each method's full video looping on its own */
+.revisit-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+.revisit video { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 4px; background: #000; }
+.revisit-head { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center; font-size: .95rem; }
+
+/* NVS: one player + thumbnail row */
+.nvs { max-width: 860px; margin: 0 auto; }
+.nvs video { display: block; width: 100%; aspect-ratio: 960/528; border-radius: 6px; background: #000; }
+.nvs .thumbs { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 8px; }
+.nvs .thumb { padding: 0; border: 2px solid transparent; border-radius: 4px; background: none; cursor: pointer; opacity: .55; }
+.nvs .thumb:hover { opacity: .85; }
+.nvs .thumb.on { border-color: var(--text); opacity: 1; }
+.nvs .thumb img { display: block; width: 100%; aspect-ratio: 960/528; object-fit: cover; border-radius: 2px; }
+@media (max-width: 768px) { .nvs .thumbs { grid-template-columns: repeat(5, 1fr); } }
+
+/* Results tables */
+.table-wrap { overflow-x: auto; margin: 1.5rem 0; }
+.results { border-collapse: collapse; margin: 0 auto; font-size: .92rem; background: #fff; }
+.results caption { caption-side: top; text-align: left; font-size: .92rem; color: var(--text); padding: 0 0 .6rem; }
+.results th, .results td { padding: .3rem .7rem; text-align: center; white-space: nowrap; }
+.results thead tr:last-child th { border-bottom: 1px solid var(--text); font-weight: 600; }
+.results thead { border-top: 2px solid var(--text); }
+.results tbody { border-bottom: 2px solid var(--text); }
+.results th.span { font-weight: 500; border-bottom: 1px solid var(--line); }
+.results .m { text-align: left; }
+.results .sep { border-right: 1px solid var(--line); }
+.results tr.group td { text-align: left; padding-top: .55rem; color: var(--muted); }
+.results tr.ours td { background: #fdf6e8; border-top: 1px solid var(--line); }
+
+/* Teaser: HexMemory visualization */
+:root { --pending: #1a9e77; }
+.teaser h2 { margin-bottom: .75rem; }
+.teaser h3 { font-family: 'Google Sans', sans-serif; font-size: 1rem; margin: 0 0 6px; font-weight: 600; text-align: center; }
+.teaser .scenes { display: flex; gap: 18px; flex-wrap: wrap; margin: 0 0 8px; }
+.teaser .scenes button { font: inherit; font-size: .9rem; background: none; border: 0; padding: 2px 0; cursor: pointer;
+                         color: var(--muted); border-bottom: 2px solid transparent; }
+.teaser .scenes button:hover { color: var(--text); }
+.teaser .scenes button.on { color: var(--text); border-bottom-color: var(--text); }
+.teaser .top { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.teaser video { width: 100%; aspect-ratio: 640/352; border-radius: 6px; display: block; background: #000; }
+.teaser #cloud { position: relative; width: 100%; aspect-ratio: 640/352; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+.teaser #cloud canvas { display: block; }
+.teaser .hint { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); color: var(--muted); font-size: .8rem;
+                pointer-events: none; background: rgba(255,255,255,.85); padding: 1px 8px; border-radius: 4px; white-space: nowrap; }
+.teaser .mem { position: relative; margin-top: 30px; padding: 30px 10px 10px; border: 1px solid var(--line); border-radius: 10px; }
+.teaser .memtitle { position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); margin: 0; padding: 0 12px; background: #fff;
+                    font-family: 'Google Sans', sans-serif; font-size: 1.2rem; font-weight: 600; white-space: nowrap; }
+.teaser .spatial { display: flex; gap: 14px; margin-top: 14px; }   /* plane widths set in JS so all three share one height */
+.teaser figure { margin: 0; text-align: center; }
+.teaser .spatial canvas { image-rendering: pixelated; border: 1px solid #ccc; display: block; }
+.teaser .st { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
+.teaser .st canvas { width: 100%; height: 70px; image-rendering: pixelated; border: 1px solid #ccc; display: block; }
+.teaser figcaption { font-size: .8rem; color: var(--muted); margin-top: 3px; }
+.teaser .legend { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; font-size: .8rem; color: var(--muted); margin-top: 12px; }
+.teaser .sw { display: inline-block; width: 22px; height: 10px; vertical-align: middle; margin-right: 5px; }
+@media (max-width: 860px) {
+  .teaser .top { grid-template-columns: 1fr; }
+  .teaser .st { grid-template-columns: 1fr; }
+}
+
+/* Title: a bee that flies in and lands at the top-left of the H in Honeycomb */
+.brand { position: relative; display: inline-block; color: #A66B00; }
+.bee { position: absolute; left: -0.78em; top: -0.52em; width: 1.05em; height: .73em; overflow: visible; transform-origin: 60% 80%;
+       animation: bee-land 2.6s cubic-bezier(.34,.12,.2,1) .4s both; }
+.bee-wings { transform-origin: 14px 6px; animation: bee-flutter 2s ease-in-out 0s infinite; }
+@keyframes bee-land {
+  0%   { opacity: 0; transform: translate(-190px, -80px) rotate(16deg) scale(.85); }
+  12%  { opacity: 1; }
+  45%  { transform: translate(-78px, 22px) rotate(-8deg) scale(1); }
+  72%  { transform: translate(-20px, -24px) rotate(8deg) scale(1); }
+  100% { opacity: 1; transform: translate(0, 0) rotate(-12deg) scale(1); }
+}
+/* quick flutter while flying in, then a gentle one that keeps going */
+@keyframes bee-flutter {
+  0%, 100% { transform: scaleY(1); }
+  6%   { transform: scaleY(.55); }
+  12%  { transform: scaleY(1); }
+  18%  { transform: scaleY(.6); }
+  24%  { transform: scaleY(1); }
+  60%  { transform: scaleY(.85); }
+  70%  { transform: scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) { .bee { animation: none; } .bee-wings { animation: none; } }
