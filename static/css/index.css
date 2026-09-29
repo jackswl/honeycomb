@@ -57,6 +57,8 @@ h2 {
   padding: .45rem 1.1rem; border-radius: 999px; font-size: .95rem;
 }
 .btn:hover { background: #111; }
+.btn { display: inline-flex; align-items: center; gap: .45rem; }
+.btn .icon { width: 1.05em; height: 1.05em; }
 
 .lead { color: var(--muted); margin-top: -.5rem; }
 .caption { color: var(--muted); font-size: .92rem; margin: .5rem 0 1.25rem; }
