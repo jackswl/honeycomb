@@ -158,6 +158,7 @@ pre {
 
 /* Teaser: HexMemory visualization */
 :root { --pending: #1a9e77; }
+.section.teaser { padding-top: 1.5rem; }
 .teaser h2 { margin-bottom: .75rem; }
 .teaser h3 { font-family: 'Google Sans', sans-serif; font-size: 1rem; margin: 0 0 6px; font-weight: 600; text-align: center; }
 .teaser .scenes { display: flex; gap: 18px; flex-wrap: wrap; margin: 0 0 8px; }
